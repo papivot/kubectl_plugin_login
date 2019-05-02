@@ -2,7 +2,7 @@
 
 **Requirements -**
 
-1. PKS 1.4.0 enviornment with UAA enabled as OIDC provider
+1. PKS 1.4.x enviornment with UAA enabled as OIDC provider
 2. PKS CLI downloaded and installed in PATH. 
 
 **HOW-TO**
