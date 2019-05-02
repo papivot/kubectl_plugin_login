@@ -1,6 +1,6 @@
 # kubectl_plugin_login
 
-Requirements - 
+**Requirements - **
 1. PKS 1.4.0 enviornment with UAA enabled as OIDC provider
 2. PKS CLI downloaded and installed in PATH. 
 
