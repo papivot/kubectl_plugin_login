@@ -8,7 +8,8 @@
 **HOW-TO**
 
 1. Clone the repo.
-2. Copy the file *kubectl-login* to your PATH
+3. *Chmod +x kubectl-login*
+2. Copy *kubectl-login* to your PATH
 2. Execute *kubectl login -h* for help
 3. Command Line options - 
 ```
