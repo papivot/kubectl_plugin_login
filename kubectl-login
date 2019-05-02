@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Kubeclt plugin for PKS get-credentials"
+echo "Kubeclt plugin for PKS get-kubeconfig"
 usage()
 {
 	echo "Usage: kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -h ]"
@@ -74,7 +74,6 @@ then
 	then
 		CLUSTER=`pks clusters --json |jq -r '.[].name'`
 		pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
-		pks logout > /dev/null 2>&1
 	elif [ $clustercount -eq 0 ]
 	then
 		echo "Could not find any active PKS cluster. Exiting..."
