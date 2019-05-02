@@ -72,6 +72,7 @@ then
 	clustercount=`pks clusters --json|jq -r '.[].name'|wc -l`
 	if [ $clustercount -eq 1 ]
 	then
+		rm -f $HOME/.kube/config
 		CLUSTER=`pks clusters --json |jq -r '.[].name'`
 		pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
 	elif [ $clustercount -eq 0 ]
