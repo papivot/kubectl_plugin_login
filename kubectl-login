@@ -79,7 +79,9 @@ then
 		echo "Could not find any active PKS cluster. Exiting..."
 		exit 0
 	else
-		echo "Multiple clusters found. Please provide a valid cluster name in the commandline arg. Exiting..."
+		echo "Multiple clusters found."
+		pks clusters --json|jq -r '.[].name'
+		echo "Please provide a valid cluster name in the commandline arg. Exiting..."
 		exit 0
 	fi
 
