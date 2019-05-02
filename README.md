@@ -18,7 +18,8 @@ kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
               [ -a PKS_API_Endpoint|Optional. e.g.api.pks.mydomain.com. Can be provided later in the execution ] \
               [ -c CLUSTER|Optional. If multiple clusters exist then CLUSTER needs to be specified ]
               
-example usages - 
+Usage examples - 
+
 kubectl login -u alana -p Passw0rd -a api.pks.mydomain.com -c cluster00
 kubectl login -u alana -p Passw0rd -a api.pks.mydomain.com 
 kubectl login -u alana -p Passw0rd 
