@@ -1,0 +1,91 @@
+#!/bin/bash
+echo "Kubeclt plugin for PKS get-credentials"
+usage()
+{
+	echo "Usage: kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -h ]"
+	exit 0
+}
+
+while getopts ":u:c:p:a:h" arg; do
+ case $arg in
+   p) # Specify password.
+     PASSWORD=${OPTARG}
+     ;;
+   u) # Specify user
+     USERNAME=${OPTARG}
+     ;;
+   a) # Specify PKS API endpoint
+     API=${OPTARG}
+     ;;
+   c) # Specify cluster
+     CLUSTER=${OPTARG}
+     ;;
+   h) # Display help.
+     usage
+     exit 0
+     ;;
+   -- ) # Optional command to execute. Defaults to /bin/sh
+     ;;
+   *)
+     ;;
+ esac
+done
+
+# If API was not provided at the commandline, read it now.
+if [ -z $API ]
+then
+	echo -n "Please provide PKS API endpoint e.g. api.pks.mydomain.com : "
+	read API
+fi
+
+# If USERNAME was not provided at the commandline, assume logged in user.
+if [ -z $USERNAME ]
+then
+	USERNAME=$USER
+fi
+
+# If PASSWORD was not provided at the commandline, read it now.
+if [ -z $PASSWORD ]
+then
+	echo -n "Plese enter the password for PKS API user $USERNAME : "
+	read -s PASSWORD
+fi
+echo
+
+# Check is PKS CLI exists in the PAST. If not, report and exit.
+if command -v pks >/dev/null 2>&1 ; then
+  	echo "PKS CLI found in PATH. Proceeding..."
+else
+  	echo "PKS CLI not found in PATH. Please download, move the pks cli to your PATH and try again. Exiting..."
+	exit 1
+fi
+
+# If CLUSTER not provided at commandline, try to grab the information from pks clusters and ask user for choice
+if [ -z $CLUSTER ]
+then
+	pks login -a $API -u $USERNAME -p $PASSWORD -k > /dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "$USERNAME was unable to successfully login to $API. Exiting..."
+		exit 1
+	fi
+	clustercount=`pks clusters --json|jq -r '.[].name'|wc -l`
+	if [ $clustercount -eq 1 ]
+	then
+		CLUSTER=`pks clusters --json |jq -r '.[].name'`
+		pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
+		pks logout > /dev/null 2>&1
+	elif [ $clustercount -eq 0 ]
+	then
+		echo "Could not find any active PKS cluster. Exiting..."
+		exit 0
+	else
+		echo "Multiple clusters found. Please provide a valid cluster name in the commandline arg. Exiting..."
+		exit 0
+	fi
+
+else
+# CLUSTER was provdided at commandline, use it to grab the config file.
+	rm -f $HOME/.kube/config
+	pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
+fi
