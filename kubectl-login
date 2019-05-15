@@ -2,7 +2,9 @@
 echo "Kubeclt plugin for PKS get-kubeconfig"
 usage()
 {
-	echo "Usage: kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -m MASTER_API ] [ -h ]"
+	echo "Usage: "
+	echo "       kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -m MASTER_API ] [ -h ]"
+	echo ""
 	exit 0
 }
 
@@ -37,8 +39,22 @@ done
 # If API was not provided at the commandline, read it now.
 if [ -z $API ]
 then
-	echo -n "Please enter the PKS API endpoint e.g. api.pks.mydomain.com : "
+	echo -n "Please enter the PKS API_EP  e.g. api.pks.mydomain.com              : "
 	read API
+fi
+
+# If  was not provided at the commandline, read it now.
+if [ -z $MASTERAPI ]
+then
+        echo -n "Please enter the cluster API_EP:PORT e.g. cluster.mydomain.com:8443 : "
+        read MASTERAPI
+fi
+
+# If CLUSTER NAME was not provided at the commandline, read it now.
+if [ -z $CLUSTER ]
+then
+        echo -n "Please enter the Cluster name                                       : "
+        read CLUSTER
 fi
 
 # If USERNAME was not provided at the commandline, assume logged in user.
@@ -50,24 +66,8 @@ fi
 # If PASSWORD was not provided at the commandline, read it now.
 if [ -z $PASSWORD ]
 then
-	echo -n "Plese enter the password for PKS API user $USERNAME : "
+	echo -n "Please enter the password user $USERNAME : "
 	read -s PASSWORD
-fi
-echo
-
-# If CLUSTER NAME was not provided at the commandline, read it now.
-if [ -z $CLUSTER ]
-then
-        echo -n "Plese enter the cluster context name : "
-        read CLUSTER
-fi
-echo
-
-# If  was not provided at the commandline, read it now.
-if [ -z $MASTERAPI ]
-then
-        echo -n "Plese enter the cluster master API_EP:PORT e.g cluster.mydomain.com:8443 : "
-        read MASTERAPI
 fi
 echo
 
@@ -92,7 +92,7 @@ else
 fi
 
 # Check is JQ exists in the PATH. If not, report and exit.
-if command -v jq >/dev/null 2>&1 
+if command -v jq >/dev/null 2>&1
 then
 #        echo "Command jq found in PATH. Proceeding..."
         :
@@ -101,27 +101,45 @@ else
         exit 1
 fi
 
-kubectl config unset "clusters.${CLUSTER}" >/dev/null 2>&1
-kubectl config unset "users.${USERNAME}" >/dev/null 2>&1
-kubectl config unset "contexts.${CLUSTER}" >/dev/null 2>&1
+############# Get the CA Cert #############
 
 echo "Retrieving cluster certificate..."
 
 openssl s_client -connect ${MASTERAPI} </dev/null 2>/dev/null | openssl x509 -outform PEM > kube.pem
 if [ ! -s kube.pem ]
 then
-	echo "Unable to retrieve cluster certificate. Verify Master API is correct."
+	echo "Failed to retrieve cluster certificate. Verify Master API is correct."
 	exit 1
 fi
+
+############# Get the OIDC tokens #############
+
+echo "Authenticating user and retrieving tokens..."
+
+UAAC_EP="https://${API}:8443/oauth/token"
+TOKENS=`curl -s $UAAC_EP -k -XPOST -H 'Accept: application/json' -d "client_id=pks_cluster_client&client_secret=""&grant_type=password&username=${USERNAME}&response_type=id_token" --data-urlencode password="${PASSWORD}"`
+IDTOKEN=`echo ${TOKENS} |jq -r .id_token`
+if [ -z ${IDTOKEN} ]
+then
+	echo "Failed to retrieve ID_TOKEN for ${USERNAME}. Please check if the user exists and the password is correct. Exiting..."
+	exit 1
+fi
+REFRESHTOKEN=`echo ${TOKENS} |jq -r .refresh_token`
+if [ -z ${REFRESHTOKEN} ]
+then
+        echo "Failed to retrieve REFRESH_TOKEN for ${USERNAME}. Please check if the user exists and the password is correct. Exiting..."
+        exit 1
+fi
+
+############# Populate kubeconfig #############
+
+kubectl config unset "clusters.${CLUSTER}" >/dev/null 2>&1
+kubectl config unset "users.${USERNAME}" >/dev/null 2>&1
+kubectl config unset "contexts.${CLUSTER}" >/dev/null 2>&1
+
 kubectl config set-cluster ${CLUSTER} --certificate-authority=kube.pem --embed-certs=true
 kubectl config set-cluster ${CLUSTER} --server=https://${MASTERAPI}
 kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${USERNAME}
-UAAC_EP="https://${API}:8443/oauth/token"
-TOKENS=`curl -s $UAAC_EP -k -XPOST -H 'Accept: application/json' -d "client_id=pks_cluster_client&client_secret=""&grant_type=password&username=${USERNAME}&response_type=id_token" --data-urlencode password="${PASSWORD}"`
-# Perform curl validations
-IDTOKEN=`echo ${TOKENS} |jq -r .id_token`
-REFRESHTOKEN=`echo ${TOKENS} |jq -r .refresh_token`
-
 kubectl config set-credentials ${USERNAME} --auth-provider=oidc --auth-provider-arg=client-id=pks_cluster_client --auth-provider-arg=cluster_client-secret="" --auth-provider-arg=idp-issuer-url=${UAAC_EP} --auth-provider-arg=id-token=${IDTOKEN} --auth-provider-arg=refresh-token=${REFRESHTOKEN}
 
 kubectl config use-context ${CLUSTER}
