@@ -8,10 +8,9 @@
 **HOW-TO**
 
 1. Clone the repo.
-3. *Chmod +x kubectl-login*
 2. Copy *kubectl-login* to your PATH
-2. Execute *kubectl login -h* for help
-3. Command Line options - 
+3. Execute *kubectl login -h* for help
+4. Command Line options - 
 ```
 kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
               [ -p PASSWORD|Optional. Cleartext is passed in command line - for use in automation] \
@@ -29,4 +28,3 @@ kubectl login
 
 
 ```
-WIP: TODO: Token error handling
