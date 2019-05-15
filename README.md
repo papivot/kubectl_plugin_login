@@ -22,10 +22,10 @@ kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
               
 Usage examples - 
 
-kubectl login -u alana -p Passw0rd -a api.pks.mydomain.com -c cluster00 -m cluster.mydomain.com:8443
-kubectl login -u alana -p Passw0rd -a api.pks.mydomain.com 
-kubectl login -u alana -p Passw0rd 
-kubeclt login -u alana
+kubectl login -u naomi -p Passw0rd -a api.pks.mydomain.com -c cluster00 -m cluster.mydomain.com:8443
+kubectl login -u naomi -p Passw0rd -a api.pks.mydomain.com 
+kubectl login -u naomi -p Passw0rd 
+kubeclt login -u naomi
 kubectl login
 
 
