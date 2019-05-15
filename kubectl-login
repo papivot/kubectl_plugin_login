@@ -143,3 +143,4 @@ kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${USERNAME}
 kubectl config set-credentials ${USERNAME} --auth-provider=oidc --auth-provider-arg=client-id=pks_cluster_client --auth-provider-arg=cluster_client-secret="" --auth-provider-arg=idp-issuer-url=${UAAC_EP} --auth-provider-arg=id-token=${IDTOKEN} --auth-provider-arg=refresh-token=${REFRESHTOKEN}
 
 kubectl config use-context ${CLUSTER}
+rm kube.pem
