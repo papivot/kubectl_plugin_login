@@ -5,6 +5,8 @@
 1. PKS 1.4.x enviornment with UAA enabled as OIDC provider
 2. curl/jq/openssl installed 
 
+Validated on Linux and Mac.
+
 **HOW-TO**
 
 1. Clone the repo.
