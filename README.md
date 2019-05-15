@@ -1,4 +1,4 @@
-# kubectl_plugin_login
+# kubectl login plugin
 
 **Requirements -**
 
