@@ -11,7 +11,7 @@ Validated on Linux and Mac.
 
 1. Clone the repo.
 2. Copy *kubectl-login* to your PATH
-3. Execute *kubectl login -h* for help
+3. Execute *kubectl login -h* for help (if it fails to execute validate that kubectl-login is set to executable)
 4. Command Line options - 
 ```
 kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
