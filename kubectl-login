@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Kubeclt plugin for PKS get-kubeconfig"
+echo "kubeclt plugin replacement for PKS get-kubeconfig"
 usage()
 {
 	echo "Usage: "
