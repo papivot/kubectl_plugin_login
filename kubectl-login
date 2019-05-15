@@ -2,11 +2,11 @@
 echo "Kubeclt plugin for PKS get-kubeconfig"
 usage()
 {
-	echo "Usage: kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -h ]"
+	echo "Usage: kubectl login [ -u USERID ] [ -p PASSWORD ] [ -c CLUSTER ] [ -a PKS_API ] [ -m MASTER_API ] [ -h ]"
 	exit 0
 }
 
-while getopts ":u:c:p:a:h" arg; do
+while getopts ":u:c:p:a:m:h" arg; do
  case $arg in
    p) # Specify password.
      PASSWORD=${OPTARG}
@@ -16,6 +16,9 @@ while getopts ":u:c:p:a:h" arg; do
      ;;
    a) # Specify PKS API endpoint
      API=${OPTARG}
+     ;;
+   m) # Specify masterapi
+     MASTERAPI=${OPTARG}
      ;;
    c) # Specify cluster
      CLUSTER=${OPTARG}
@@ -34,7 +37,7 @@ done
 # If API was not provided at the commandline, read it now.
 if [ -z $API ]
 then
-	echo -n "Please provide PKS API endpoint e.g. api.pks.mydomain.com : "
+	echo -n "Please enter the PKS API endpoint e.g. api.pks.mydomain.com : "
 	read API
 fi
 
@@ -52,42 +55,73 @@ then
 fi
 echo
 
-# Check is PKS CLI exists in the PAST. If not, report and exit.
-if command -v pks >/dev/null 2>&1 ; then
-  	echo "PKS CLI found in PATH. Proceeding..."
-else
-  	echo "PKS CLI not found in PATH. Please download, move the pks cli to your PATH and try again. Exiting..."
-	exit 1
-fi
-
-# If CLUSTER not provided at commandline, try to grab the information from pks clusters and ask user for choice
+# If CLUSTER NAME was not provided at the commandline, read it now.
 if [ -z $CLUSTER ]
 then
-	pks login -a $API -u $USERNAME -p $PASSWORD -k > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo "$USERNAME was unable to successfully login to $API. Exiting..."
-		exit 1
-	fi
-	clustercount=`pks clusters --json|jq -r '.[].name'|wc -l`
-	if [ $clustercount -eq 1 ]
-	then
-		rm -f $HOME/.kube/config
-		CLUSTER=`pks clusters --json |jq -r '.[].name'`
-		pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
-	elif [ $clustercount -eq 0 ]
-	then
-		echo "Could not find any active PKS cluster. Exiting..."
-		exit 0
-	else
-		echo "Multiple clusters found."
-		pks clusters --json|jq -r '.[].name'
-		echo "Please provide a valid cluster name in the commandline arg. Exiting..."
-		exit 0
-	fi
-
-else
-# CLUSTER was provdided at commandline, use it to grab the config file.
-	rm -f $HOME/.kube/config
-	pks get-kubeconfig $CLUSTER -u $USERNAME -p $PASSWORD -a $API -k
+        echo -n "Plese enter the cluster context name : "
+        read CLUSTER
 fi
+echo
+
+# If  was not provided at the commandline, read it now.
+if [ -z $MASTERAPI ]
+then
+        echo -n "Plese enter the cluster master API_EP:PORT e.g cluster.mydomain.com:8443 : "
+        read MASTERAPI
+fi
+echo
+
+# Check is openssl exists in the PATH. If not, report and exit.
+if command -v openssl >/dev/null 2>&1
+then
+#        echo "Command openssl found in PATH. Proceeding..."
+	:
+else
+        echo "Command openssl not found in PATH. Please install openssl and try again. Exiting..."
+        exit 1
+fi
+
+# Check is curl exists in the PATH. If not, report and exit.
+if command -v curl >/dev/null 2>&1
+then
+#        echo "Command curl found in PATH. Proceeding..."
+	:
+else
+        echo "Command curl not found in PATH. Please install curl and try again. Exiting..."
+        exit 1
+fi
+
+# Check is JQ exists in the PATH. If not, report and exit.
+if command -v jq >/dev/null 2>&1 
+then
+#        echo "Command jq found in PATH. Proceeding..."
+        :
+else
+        echo "Command JQ not found in PATH. Please install JQ and try again. Exiting..."
+        exit 1
+fi
+
+kubectl config unset "clusters.${CLUSTER}" >/dev/null 2>&1
+kubectl config unset "users.${USERNAME}" >/dev/null 2>&1
+kubectl config unset "contexts.${CLUSTER}" >/dev/null 2>&1
+
+echo "Retrieving cluster certificate..."
+
+openssl s_client -connect ${MASTERAPI} </dev/null 2>/dev/null | openssl x509 -outform PEM > kube.pem
+if [ ! -s kube.pem ]
+then
+	echo "Unable to retrieve cluster certificate. Verify Master API is correct."
+	exit 1
+fi
+kubectl config set-cluster ${CLUSTER} --certificate-authority=kube.pem --embed-certs=true
+kubectl config set-cluster ${CLUSTER} --server=https://${MASTERAPI}
+kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${USERNAME}
+UAAC_EP="https://${API}:8443/oauth/token"
+TOKENS=`curl -s $UAAC_EP -k -XPOST -H 'Accept: application/json' -d "client_id=pks_cluster_client&client_secret=""&grant_type=password&username=${USERNAME}&response_type=id_token" --data-urlencode password="${PASSWORD}"`
+# Perform curl validations
+IDTOKEN=`echo ${TOKENS} |jq -r .id_token`
+REFRESHTOKEN=`echo ${TOKENS} |jq -r .refresh_token`
+
+kubectl config set-credentials ${USERNAME} --auth-provider=oidc --auth-provider-arg=client-id=pks_cluster_client --auth-provider-arg=cluster_client-secret="" --auth-provider-arg=idp-issuer-url=${UAAC_EP} --auth-provider-arg=id-token=${IDTOKEN} --auth-provider-arg=refresh-token=${REFRESHTOKEN}
+
+kubectl config use-context ${CLUSTER}
