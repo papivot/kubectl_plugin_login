@@ -56,7 +56,7 @@ fi
 # If TOKEN was not provided at the commandline, read it now.
 if [ -z $TOKEN ]
 then
-	echo -n "Please enter the password user $USERNAME : "
+	echo -n "Please enter the token user $USERNAME : "
 	read -s TOKEN
 fi
 echo
