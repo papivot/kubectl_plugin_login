@@ -45,17 +45,15 @@ kubectl login
 **PASSWORD/TOKEN**
 ```
 kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
-              [ -p PASSWORD|Optional. Cleartext is passed in command line - for use in automation] \
-              [ -a PKS_API_Endpoint|Optional. e.g.api.pks.mydomain.com. Can be provided later in the execution ] \
+              [ -t TOKEN/PASSWORD|Optional. Cleartext is passed in command line - for use in automation] \
               [ -c CLUSTER CLUSTER_NAME to be used for context ] \
               [ -m CLUSTER_API_EP|Optional. e.g. cluster.mydomain.com:8443. Can be provided later ] \
               
 Usage examples - 
 
-kubectl login -u naomi -p Passw0rd -a api.pks.mydomain.com -c cluster00 -m cluster.mydomain.com:8443
-kubectl login -u naomi -p Passw0rd -a api.pks.mydomain.com 
-kubectl login -u naomi -p Passw0rd 
-kubeclt login -u naomi
+kubectl login -u naomi -t JDHJSDHoi9DH -c cluster00 -m cluster.mydomain.com:8443
+kubectl login -u naomi -t JDHJSDHoi9DH 
+kubectl login -u naomi
 kubectl login
 ```
 
