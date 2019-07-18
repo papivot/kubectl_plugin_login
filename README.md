@@ -12,7 +12,7 @@ Validated on Linux and Mac.  Can be used in interactive or automaded mode.
 
 1. Clone the repo.
 
-> `https://github.com/papivot/kubectl_plugin_login.git`
+> `git clone https://github.com/papivot/kubectl_plugin_login.git`
 
 2. Copy the relevent *kubectl-login-[oidc/token]* to your PATH as *kubectl-login*. E.g.
 
