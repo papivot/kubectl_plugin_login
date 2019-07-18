@@ -2,7 +2,7 @@
 
 **Requirements -**
 
-1. PKS 1.4.x enviornment with UAA enabled as OIDC provider
+1. PKS 1.4.x enviornment with UAA enabled as OIDC provider - use *kubectl-login-oidc*. If OIDC is not enabled and access will be thru token/password, please use *kubectl-login-token*.
 2. curl/jq/openssl installed 
 
 Validated on Linux and Mac.  Can be used in interactive or automaded mode.
@@ -10,9 +10,10 @@ Validated on Linux and Mac.  Can be used in interactive or automaded mode.
 **HOW-TO**
 
 1. Clone the repo.
-2. Copy *kubectl-login* to your PATH
+2. Copy the relevent *kubectl-login-[oidc/token]* to your PATH as *kubectl-login*
 3. Execute *kubectl login -h* for help (if it fails to execute validate that kubectl-login is set to executable)
 4. Command Line options - 
+
 ```
 kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
               [ -p PASSWORD|Optional. Cleartext is passed in command line - for use in automation] \
@@ -27,6 +28,4 @@ kubectl login -u naomi -p Passw0rd -a api.pks.mydomain.com
 kubectl login -u naomi -p Passw0rd 
 kubeclt login -u naomi
 kubectl login
-
-
 ```
