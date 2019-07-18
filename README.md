@@ -2,8 +2,9 @@
 
 **Requirements -**
 
-1. PKS 1.4.x enviornment with UAA enabled as OIDC provider - use *kubectl-login-oidc*. If OIDC is not enabled and access will be thru token/password, please use *kubectl-login-token*.
-2. curl/jq/openssl installed 
+* PKS 1.4.x enviornment with UAA enabled as OIDC provider - use *kubectl-login-oidc*. 
+* If OIDC is not enabled and access will be thru token/password, please use *kubectl-login-token*.
+* curl/jq/openssl installed 
 
 Validated on Linux and Mac.  Can be used in interactive or automaded mode.
 
