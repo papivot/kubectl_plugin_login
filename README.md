@@ -16,10 +16,12 @@ Validated on Linux and Mac.  Can be used in interactive or automaded mode.
 2. Copy the relevent *kubectl-login-[oidc/token]* to your PATH as *kubectl-login*. E.g.
 
 > `cp kubectl-login-oidc /usr/local/bin/kubectl-login`
+
 or
+
 > `cp kubectl-login-token /usr/local/bin/kubectl-login`
 
-3. Execute *kubectl login -h* for help (if it fails to execute validate that kubectl-login is set to executable)
+3. Execute `kubectl login -h` for help (if it fails to execute, validate that kubectl-login is set to **executable**)
 4. Command Line options - 
 
 ```
