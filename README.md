@@ -62,3 +62,18 @@ kubectl login -u naomi
 kubectl login
 ```
 
+**X509 CERT**
+```
+kubectl login [ -u USERNAME|Optional. Defaults to $USER if not provided ] \
+              [ -t CERT_FILE|Optional. Path to cert file] \
+              [ -k KEY_FILE |Optional. Path to key file] \
+              [ -c CLUSTER CLUSTER_NAME to be used for context ] \
+              [ -m CLUSTER_API_EP|Optional. e.g. cluster.mydomain.com:8443. Can be provided later ] \
+              
+Usage examples - 
+
+kubectl login -u naomi -t /tmp/admin.cet -k /tmp/admin.key -c cluster00 -m cluster.mydomain.com:8443
+kubectl login -u naomi -t /tmp/admin.cet -k /tmp/admin.key -c cluster00 
+kubectl login -u naomi -c cluster00
+kubectl login
+```
