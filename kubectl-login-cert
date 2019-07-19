@@ -1,0 +1,125 @@
+#!/bin/bash
+echo "kubeclt plugin replacement for PKS get-kubeconfig"
+usage()
+{
+	echo "Usage: "
+	echo "       kubectl login [ -u USERID ] [ -k KEY ] [ -t CERT ] [ -c CLUSTER ] [ -m MASTER_API ] [ -h ]"
+	echo ""
+	exit 0
+}
+
+while getopts ":u:c:p:a:m:h" arg; do
+ case $arg in
+   t) # Specify certfile
+     CERT=${OPTARG}
+     ;;
+   u) # Specify user
+     USERNAME=${OPTARG}
+     ;;
+   k) # Specify keyfile
+     KEY=${OPTARG}
+     ;;
+   m) # Specify masterapi
+     MASTERAPI=${OPTARG}
+     ;;
+   c) # Specify cluster
+     CLUSTER=${OPTARG}
+     ;;
+   h) # Display help.
+     usage
+     exit 0
+     ;;
+   -- ) # Optional command to execute. Defaults to /bin/sh
+     ;;
+   *)
+     ;;
+ esac
+done
+
+# If  was not provided at the commandline, read it now.
+if [ -z $MASTERAPI ]
+then
+        echo -n "Please enter the cluster API_EP:PORT e.g. cluster.mydomain.com:8443 : "
+        read MASTERAPI
+fi
+
+# If CLUSTER NAME was not provided at the commandline, read it now.
+if [ -z $CLUSTER ]
+then
+        echo -n "Please enter the Cluster name                                       : "
+        read CLUSTER
+fi
+
+# If USERNAME was not provided at the commandline, assume logged in user.
+if [ -z $USERNAME ]
+then
+	USERNAME=admin
+fi
+
+# If KEY was not provided at the commandline, read it now.
+if [ -z $KEY ]
+then
+	echo -n "Please enter the keyfile with full path : "
+	read KEY
+fi
+
+# If CERT was not provided at the commandline, read it now.
+if [ -z $CERT ]
+then
+	echo -n "Please enter the certfile with full path : "
+	read CERT
+fi
+echo
+
+# Check is openssl exists in the PATH. If not, report and exit.
+if command -v openssl >/dev/null 2>&1
+then
+#        echo "Command openssl found in PATH. Proceeding..."
+	:
+else
+        echo "Command openssl not found in PATH. Please install openssl and try again. Exiting..."
+        exit 1
+fi
+
+# Check is curl exists in the PATH. If not, report and exit.
+if command -v curl >/dev/null 2>&1
+then
+#        echo "Command curl found in PATH. Proceeding..."
+	:
+else
+        echo "Command curl not found in PATH. Please install curl and try again. Exiting..."
+        exit 1
+fi
+
+# Check is JQ exists in the PATH. If not, report and exit.
+if command -v jq >/dev/null 2>&1
+then
+#        echo "Command jq found in PATH. Proceeding..."
+        :
+else
+        echo "Command JQ not found in PATH. Please install JQ and try again. Exiting..."
+        exit 1
+fi
+
+############# Get the CA Cert #############
+
+echo "Retrieving cluster certificate..."
+
+openssl s_client -connect ${MASTERAPI} </dev/null 2>/dev/null | openssl x509 -outform PEM > kube.pem
+if [ ! -s kube.pem ]
+then
+	echo "Failed to retrieve cluster certificate. Verify Master API is correct."
+	exit 1
+fi
+
+############# Populate kubeconfig #############
+
+kubectl config unset "clusters.${CLUSTER}" >/dev/null 2>&1
+kubectl config unset "users.${USERNAME}" >/dev/null 2>&1
+kubectl config unset "contexts.${CLUSTER}" >/dev/null 2>&1
+
+kubectl config set-cluster ${CLUSTER} --certificate-authority=kube.pem --embed-certs=true
+kubectl config set-cluster ${CLUSTER} --server=https://${MASTERAPI}
+kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${USERNAME}
+kubectl config set-credentials ${USERNAME} --client-certificate=$CERT --client-key=$KEY --embed-certs=true
+kubectl config use-context ${CLUSTER}
